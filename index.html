@@ -1,0 +1,706 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Working Memory Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout concept: a lab booklet. One column, each study runs predict -> test -> compare.
+   Colour carries meaning: blue = visual/spatial tasks, amber = verbal tasks. */
+:root{
+  --bg:#eceff5; --surface:#ffffff; --surface-2:#f3f5fa; --ink:#18202f; --muted:#566074; --line:#d3d9e4;
+  --vis:#2a5bd7; --vis-soft:#e3ebfc; --on-vis:#ffffff;
+  --ver:#b4530a; --ver-soft:#fbead8; --on-ver:#ffffff;
+  --ok:#17794a; --ok-soft:#dff3e8; --bad:#b3321f; --bad-soft:#fbe4df;
+  --font-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131b; --surface:#181e2b; --surface-2:#202839; --ink:#e7ebf4; --muted:#9aa5ba; --line:#2d374b;
+    --vis:#7fa4ff; --vis-soft:#1d2a4a; --on-vis:#0f131b;
+    --ver:#f2a45f; --ver-soft:#3a2a1a; --on-ver:#0f131b;
+    --ok:#63d594; --ok-soft:#173226; --bad:#ff8f7e; --bad-soft:#40201b;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131b; --surface:#181e2b; --surface-2:#202839; --ink:#e7ebf4; --muted:#9aa5ba; --line:#2d374b;
+  --vis:#7fa4ff; --vis-soft:#1d2a4a; --on-vis:#0f131b;
+  --ver:#f2a45f; --ver-soft:#3a2a1a; --on-ver:#0f131b;
+  --ok:#63d594; --ok-soft:#173226; --bad:#ff8f7e; --bad-soft:#40201b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:16px; line-height:1.55;
+  padding-block:28px 64px;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--font-display);line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:clamp(2.1rem,7vw,3.4rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.kicker{font-family:var(--font-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);max-width:60ch;margin-top:10px}
+:focus-visible{outline:3px solid var(--vis);outline-offset:2px}
+
+/* tabs */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}
+.tab{font:inherit;text-align:left;cursor:pointer;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tab b{font-family:var(--font-display);font-size:1rem}
+.tab span{font-size:.8rem;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--surface);border-color:var(--tabc);box-shadow:inset 0 -4px 0 var(--tabc)}
+.tab[data-tab="s1"]{--tabc:var(--vis)} .tab[data-tab="s2"]{--tabc:var(--ver)} .tab[data-tab="check"]{--tabc:var(--ink)}
+@media (max-width:560px){.tabs{grid-template-columns:1fr}}
+
+/* panels */
+.panel{display:flex;flex-direction:column;gap:26px}
+.panel[hidden]{display:none}
+.step{display:flex;flex-direction:column;gap:12px}
+.step-label{font-family:var(--font-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:2px solid var(--line);padding-top:10px}
+.facts{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}
+.facts dt{font-family:var(--font-mono);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-top:3px}
+.facts dd{margin:0;min-width:0}
+@media (max-width:560px){.facts{grid-template-columns:1fr;gap:2px}.facts dd{margin-bottom:10px}}
+
+/* buttons and chips */
+.btn{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;min-height:44px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent,var(--vis));border-color:var(--accent,var(--vis));color:var(--on-accent,var(--on-vis))}
+.btn.ghost{background:transparent}
+.s2 .btn.primary{--accent:var(--ver);--on-accent:var(--on-ver)}
+.s2 :focus-visible{outline-color:var(--ver)}
+.btn kbd{font-family:var(--font-mono);font-size:.75rem;opacity:.8;margin-left:6px;border:1px solid currentColor;border-radius:4px;padding:0 5px}
+.chip{display:inline-block;font-size:.78rem;font-weight:600;border-radius:999px;padding:2px 10px;background:var(--surface-2);color:var(--muted)}
+.chip.vis,.tag.vis{background:var(--vis-soft);color:var(--vis)}
+.chip.ver,.tag.ver{background:var(--ver-soft);color:var(--ver)}
+.tag{display:inline-block;font-size:.76rem;font-weight:600;border-radius:999px;padding:1px 9px;background:var(--surface-2);color:var(--muted)}
+
+/* prediction */
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
+.choice input{margin-top:5px;accent-color:var(--vis)}
+.s2 .choice input{accent-color:var(--ver)}
+.choice:has(input:checked){border-color:var(--ink)}
+.note{color:var(--muted);font-size:.9rem}
+
+/* condition cards */
+.conds{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.cond{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start;min-width:0}
+.cond-n{font-family:var(--font-display);font-weight:800;font-size:1.6rem;line-height:1;color:var(--muted)}
+.cond.done .cond-n{color:var(--ok)}
+.cond-body{display:flex;flex-direction:column;gap:4px;min-width:0}
+.cond .sum{font-family:var(--font-mono);font-size:.82rem;color:var(--muted)}
+.cond-body .tag{align-self:flex-start}
+.cond .btn{grid-column:1 / -1;margin-top:6px}
+
+/* stage */
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;min-height:260px;display:flex;flex-direction:column;justify-content:center}
+.study{display:grid;grid-template-columns:minmax(120px,190px) 1fr;gap:22px;align-items:center}
+.study-fig svg{width:100%;height:auto;max-height:300px}
+.study-text{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.rule{background:var(--surface-2);border-radius:8px;padding:8px 12px}
+.extra{font-weight:600}
+.extra.verbal{color:var(--ver)} .extra.visual{color:var(--vis)}
+@media (max-width:560px){.study{grid-template-columns:1fr}.study-fig{max-width:150px}}
+.fshape{fill:var(--surface-2);stroke:var(--ink);stroke-width:.09;stroke-linejoin:round}
+.fdot{fill:var(--muted)}
+.fstart{fill:var(--ok);stroke:var(--surface);stroke-width:.08}
+.fnum{font-family:var(--font-display);font-weight:800;font-size:.55px;fill:#fff;text-anchor:middle}
+
+.run{display:flex;flex-direction:column;gap:14px}
+.run-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.clock{font-family:var(--font-mono);font-weight:600}
+canvas.arena{width:100%;height:200px;display:block;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;touch-action:none;cursor:crosshair}
+.corner{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.corner .big{font-family:var(--font-display);font-size:1.5rem;font-weight:800}
+.pips{display:flex;gap:4px}
+.pips i{width:14px;height:8px;border-radius:2px;background:var(--line)}
+.pips i.on{background:var(--vis)}
+.q{font-weight:500}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.answers .btn{font-size:1.15rem;padding:14px}
+.say{font-weight:600;color:var(--ver);background:var(--ver-soft);border-radius:8px;padding:8px 12px}
+.done,.brief{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.done .big{font-family:var(--font-display);font-size:1.4rem;font-weight:800}
+
+/* study 2 */
+.digits{font-family:var(--font-mono);font-weight:600;font-size:clamp(2.2rem,10vw,4rem);letter-spacing:.18em;color:var(--ver)}
+.item{display:flex;flex-direction:column;gap:12px}
+.statement{font-family:var(--font-display);font-size:clamp(1.8rem,7vw,2.8rem);font-weight:800}
+.pair{font-family:var(--font-mono);font-weight:600;font-size:clamp(1.8rem,7vw,2.6rem);letter-spacing:.1em}
+.recall-row{display:flex;gap:10px;flex-wrap:wrap}
+.recall-row input{font-family:var(--font-mono);font-size:1.6rem;letter-spacing:.2em;width:min(100%,14ch);padding:8px 12px;border-radius:8px;border:1px solid var(--ink);background:var(--surface-2);color:var(--ink)}
+
+/* results */
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+table.data{border-collapse:collapse;width:100%;min-width:520px}
+table.data th,table.data td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.data tr:last-child td{border-bottom:0}
+table.data th{font-family:var(--font-mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+table.data td.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.bar{display:inline-block;width:70px;height:8px;background:var(--surface-2);border-radius:4px;vertical-align:middle;margin-left:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--vis)}
+.s2 .bar i{background:var(--ver)}
+.lock{background:var(--surface-2);border:1px dashed var(--line);border-radius:var(--radius);padding:14px;color:var(--muted)}
+.compare{display:flex;flex-direction:column;gap:14px}
+.mine,.orig,.remember{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:8px}
+.mine ul,.orig ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+.verdict{font-weight:600}
+.orig h3{color:var(--accent,var(--vis))}
+.s2 .orig h3{--accent:var(--ver)}
+.remember{background:var(--surface-2);border-style:dashed}
+.share textarea{width:100%;font-family:var(--font-mono);font-size:.8rem;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
+.share{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+
+/* check */
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px}
+.qcard h3{font-family:var(--font-body)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{font:inherit;text-align:left;cursor:pointer;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.why{color:var(--muted);font-size:.92rem}
+.scorebar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.scorebar b{font-family:var(--font-display);font-size:1.3rem}
+.sr{position:absolute;left:-9999px}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="kicker">Baddeley and Hitch (1976)</p>
+    <h1>Working Memory Lab</h1>
+    <p class="lede">Do the dual-task experiments yourself. Predict what will happen, run the conditions, then compare your results with the original studies.</p>
+    <div class="tabs" role="tablist" aria-label="Choose a study">
+      <button class="tab" role="tab" id="tab-s1" data-tab="s1" aria-selected="true" aria-controls="panel-s1"><b>Study 1</b><span>Visuo-spatial sketchpad</span></button>
+      <button class="tab" role="tab" id="tab-s2" data-tab="s2" aria-selected="false" aria-controls="panel-s2" tabindex="-1"><b>Study 2</b><span>Phonological loop</span></button>
+      <button class="tab" role="tab" id="tab-check" data-tab="check" aria-selected="false" aria-controls="panel-check" tabindex="-1"><b>Check yourself</b><span>7 quick questions</span></button>
+    </div>
+  </header>
+
+  <!-- ============ STUDY 1 ============ -->
+  <section class="panel s1" role="tabpanel" id="panel-s1" aria-labelledby="tab-s1">
+    <div class="step">
+      <h2>Study 1: the visuo-spatial sketchpad</h2>
+      <dl class="facts">
+        <dt>Aim</dt><dd>To investigate whether visual and spatial tasks use the same system within working memory, the visuo-spatial sketchpad.</dd>
+        <dt>Method</dt><dd><b>Task 1:</b> mentally trace the shape of the letter F and say “yes” or “no” depending on whether each corner is at the top or bottom.<br><b>Task 2:</b> either a visual task (track a moving light with a pointer) or a verbal task (say “yes” repeatedly out loud).</dd>
+      </dl>
+    </div>
+
+    <div class="step">
+      <p class="step-label">Step 1 · Predict</p>
+      <h3>Which pairing do you think will be harder for you?</h3>
+      <div class="choices" id="s1-predict" role="radiogroup" aria-label="Your prediction">
+        <label class="choice"><input type="radio" name="p1" value="Tracing the F while saying “yes”"><span>Tracing the F while saying “yes” out loud</span></label>
+        <label class="choice"><input type="radio" name="p1" value="Tracing the F while tracking the light"><span>Tracing the F while tracking the moving light</span></label>
+        <label class="choice"><input type="radio" name="p1" value="Both equally"><span>Both would affect me equally</span></label>
+      </div>
+    </div>
+
+    <div class="step">
+      <p class="step-label">Step 2 · Run the four conditions</p>
+      <p class="note">Do them in order, 1 to 4. Use a mouse or a finger to track the light. On a keyboard, press Y or N to answer.</p>
+      <div class="conds" id="s1-conds"></div>
+      <div class="stage" id="s1-stage" aria-live="polite"></div>
+    </div>
+
+    <div class="step" id="s1-results-step">
+      <p class="step-label">Step 3 · Your results</p>
+      <div class="tablewrap"><table class="data" id="s1-table"></table></div>
+      <div id="s1-compare"></div>
+    </div>
+  </section>
+
+  <!-- ============ STUDY 2 ============ -->
+  <section class="panel s2" role="tabpanel" id="panel-s2" aria-labelledby="tab-s2" hidden>
+    <div class="step">
+      <h2>Study 2: the phonological loop</h2>
+      <dl class="facts">
+        <dt>Aim</dt><dd>To test if working memory has separate components by seeing if people can do two tasks at once without performance suffering.</dd>
+        <dt>Method</dt><dd>Participants did two tasks at the same time:<br>A <b>reasoning task</b> (for example “B follows A – AB?”).<br>A <b>digit span task</b>, where they had to remember 1 to 6 digits.</dd>
+      </dl>
+    </div>
+
+    <div class="step">
+      <p class="step-label">Step 1 · Predict</p>
+      <h3>What will happen to your reasoning when you also hold 6 digits in mind?</h3>
+      <div class="choices" id="s2-predict" role="radiogroup" aria-label="Your prediction">
+        <label class="choice"><input type="radio" name="p2" value="Accuracy will fall sharply"><span>My accuracy will fall sharply</span></label>
+        <label class="choice"><input type="radio" name="p2" value="Accuracy stays high, a bit slower"><span>My accuracy will stay high, but I will be a bit slower</span></label>
+        <label class="choice"><input type="radio" name="p2" value="No effect at all"><span>It will make no difference at all</span></label>
+      </div>
+    </div>
+
+    <div class="step">
+      <p class="step-label">Step 2 · Run the four rounds</p>
+      <p class="note">In each round you see some digits, then answer 6 reasoning questions while you keep the digits in mind, then type the digits back. Say them over and over (out loud or in your head). On a keyboard, press T for true and F for false.</p>
+      <div class="conds" id="s2-conds"></div>
+      <div class="stage" id="s2-stage" aria-live="polite"></div>
+    </div>
+
+    <div class="step">
+      <p class="step-label">Step 3 · Your results</p>
+      <div class="tablewrap"><table class="data" id="s2-table"></table></div>
+      <div id="s2-compare"></div>
+    </div>
+  </section>
+
+  <!-- ============ CHECK ============ -->
+  <section class="panel" role="tabpanel" id="panel-check" aria-labelledby="tab-check" hidden>
+    <div class="step">
+      <h2>Check yourself</h2>
+      <p class="note">Pick an answer to see why it is right or wrong.</p>
+      <div class="scorebar"><span>Score: <b id="q-score">0 / 7</b></span><button class="btn ghost" id="q-reset">Start again</button></div>
+      <div id="q-list" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,el){return (el||document).querySelector(s)};
+var $$=function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))};
+var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+var fmt=function(n){return n.toFixed(1)};
+var reduceMotion=false;
+try{reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+
+/* ---------- tabs ---------- */
+var tabs=$$('.tab'), panels=$$('.panel');
+function showTab(id){
+  abort1(); abort2();
+  tabs.forEach(function(t){var on=t.dataset.tab===id;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1});
+  panels.forEach(function(p){p.hidden=(p.id!=='panel-'+id)});
+}
+tabs.forEach(function(t,i){
+  t.addEventListener('click',function(){showTab(t.dataset.tab)});
+  t.addEventListener('keydown',function(e){
+    var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0; if(!d)return;
+    var n=tabs[(i+d+tabs.length)%tabs.length]; n.focus(); showTab(n.dataset.tab); e.preventDefault();
+  });
+});
+
+/* ---------- copy helper ---------- */
+function shareBlock(id,text){
+  return '<div class="share"><label for="'+id+'" class="note">Copy your results to send to your teacher</label>'+
+    '<textarea id="'+id+'" rows="3" readonly>'+esc(text)+'</textarea>'+
+    '<button class="btn ghost" data-copy="'+id+'">Copy results</button></div>';
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-copy]'); if(!b)return;
+  var ta=document.getElementById(b.dataset.copy); if(!ta)return;
+  ta.select();
+  var done=function(){b.textContent='Copied'};
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){b.textContent='Press Ctrl+C to copy'})}
+    else{b.textContent='Press Ctrl+C to copy'}
+  }catch(err){b.textContent='Press Ctrl+C to copy'}
+});
+
+/* =====================================================
+   STUDY 1
+   ===================================================== */
+var FV=[[0,0],[3,0],[3,1],[1,1],[1,2],[2.5,2],[2.5,3],[1,3],[1,6],[0,6]];
+var FANS=FV.map(function(p){return p[1]===0||p[1]===6});
+var TRACK_MS=20000, HIT=34;
+var CONDS1=[
+  {id:'F', n:1,name:'Trace the F',tag:'Baseline',kind:'',f:true,v:false,t:false},
+  {id:'FV',n:2,name:'Trace the F and say “yes”',tag:'Visual task + verbal task',kind:'ver',f:true,v:true,t:false},
+  {id:'FT',n:3,name:'Trace the F and track the light',tag:'Two visual/spatial tasks',kind:'vis',f:true,v:false,t:true},
+  {id:'T', n:4,name:'Track the light',tag:'Baseline',kind:'',f:false,v:false,t:true}
+];
+var s1={pred:null,res:{},run:null,lastStart:-1};
+
+function fSvg(k){
+  var pts=FV.map(function(p){return p[0]+','+p[1]}).join(' ');
+  var dots=FV.map(function(p,i){return i===k?'':'<circle class="fdot" cx="'+p[0]+'" cy="'+p[1]+'" r=".12"/>'}).join('');
+  return '<svg viewBox="-0.7 -0.7 4.4 7.4" role="img" aria-label="The letter F with its starting corner marked by a green dot">'+
+    '<polygon class="fshape" points="'+pts+'"/>'+dots+
+    '<circle class="fstart" cx="'+FV[k][0]+'" cy="'+FV[k][1]+'" r=".3"/>'+
+    '<text class="fnum" x="'+FV[k][0]+'" y="'+(FV[k][1]+.19)+'">1</text></svg>';
+}
+
+function renderConds1(){
+  $('#s1-conds').innerHTML=CONDS1.map(function(c){
+    var r=s1.res[c.id], sum='Not done yet';
+    if(r){sum=[c.f?(r.correct+'/10 correct, '+fmt(r.time)+' s'):'',c.t?('on target '+Math.round(r.track)+'%'):''].filter(Boolean).join(' · ')}
+    return '<article class="cond'+(r?' done':'')+'"><div class="cond-n">'+c.n+'</div><div class="cond-body"><h3>'+esc(c.name)+'</h3>'+
+      '<span class="tag '+c.kind+'">'+esc(c.tag)+'</span><p class="sum">'+esc(sum)+'</p></div>'+
+      '<button class="btn ghost" data-start="'+c.id+'">'+(r?'Redo':'Start')+'</button></article>';
+  }).join('');
+}
+
+function stageIdle1(){
+  $('#s1-stage').innerHTML='<div class="study"><div class="study-fig">'+fSvg(0)+'</div><div class="study-text">'+
+    '<h3>How the F task works</h3>'+
+    '<p>You will see this letter, then it disappears. Trace round its outline in your head, one corner at a time, starting at the green dot.</p>'+
+    '<p class="rule">Yes = the corner is on the very top or very bottom edge of the letter.<br>No = any other corner.</p>'+
+    '<p class="note">Choose a condition above to begin.</p></div></div>';
+}
+
+function abort1(){
+  var r=s1.run; if(!r)return;
+  cancelAnimationFrame(r.raf); s1.run=null;
+  if($('#s1-stage'))stageIdle1();
+}
+
+function startCond1(id){
+  abort1();
+  var cond=CONDS1.filter(function(c){return c.id===id})[0];
+  var k; do{k=Math.floor(Math.random()*10)}while(k===s1.lastStart); s1.lastStart=k;
+  var dir=Math.random()<.5?1:-1;
+  s1.run={cond:cond,k:k,dir:dir,phase:cond.f?'study':'brief',idx:0,correct:0,on:0,total:0,last:null,ptr:null,raf:0,t0:0,W:600,H:200};
+  if(cond.f)stageStudy1();else stageBrief1();
+  $('#s1-stage').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'nearest'});
+}
+
+function stageStudy1(){
+  var r=s1.run,c=r.cond, dirName=r.dir===1?'clockwise':'anticlockwise';
+  $('#s1-stage').innerHTML='<div class="study"><div class="study-fig">'+fSvg(r.k)+'</div><div class="study-text">'+
+    '<span class="chip '+c.kind+'">Condition '+c.n+' of 4: '+esc(c.name)+'</span>'+
+    '<p>Study the letter. The green dot is corner 1. Trace the outline <b>'+dirName+'</b>, one corner at a time.</p>'+
+    '<p class="rule">Yes = the corner is on the very top or very bottom edge of the letter. No = any other corner.</p>'+
+    (c.v?'<p class="extra verbal">At the same time, say “yes” out loud, over and over, until you finish.</p>':'')+
+    (c.t?'<p class="extra visual">At the same time, keep your pointer on the moving light.</p>':'')+
+    '<button class="btn primary" id="s1-go">Hide the F and start</button></div></div>';
+}
+function stageBrief1(){
+  $('#s1-stage').innerHTML='<div class="brief"><span class="chip">Condition 4 of 4: Track the light</span>'+
+    '<p>Keep your pointer (or finger) on the moving light for 20 seconds. Nothing else to do.</p>'+
+    '<button class="btn primary" id="s1-go">Start tracking</button></div>';
+}
+
+function beginRun1(){
+  var r=s1.run; if(!r||r.phase==='run')return;
+  var c=r.cond; r.phase='run';
+  var pips=''; for(var i=0;i<10;i++)pips+='<i></i>';
+  $('#s1-stage').innerHTML='<div class="run"><div class="run-head"><span class="chip '+c.kind+'">Condition '+c.n+': '+esc(c.name)+'</span><span class="clock" id="s1-clock">0.0 s</span></div>'+
+    (c.t?'<canvas class="arena" id="s1-canvas" aria-label="Moving light tracking area"></canvas>':'')+
+    (c.f?'<div class="corner"><span class="big">Corner <span id="s1-cn">1</span> of 10</span><div class="pips" id="s1-pips">'+pips+'</div></div>'+
+      '<p class="q">Is this corner on the very top or very bottom of the F?</p>'+
+      '<div class="answers"><button class="btn" data-a="1">Yes <kbd>Y</kbd></button><button class="btn" data-a="0">No <kbd>N</kbd></button></div>':'')+
+    (c.v?'<p class="say">Keep saying “yes” out loud, over and over.</p>':'')+
+    '</div>';
+  if(c.t){
+    var cv=$('#s1-canvas'), b=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    cv.width=Math.round(b.width*dpr); cv.height=Math.round(b.height*dpr);
+    r.W=b.width; r.H=b.height; r.ctx=cv.getContext('2d'); r.ctx.setTransform(dpr,0,0,dpr,0,0);
+    var cs=getComputedStyle(document.documentElement);
+    r.col={ink:cs.getPropertyValue('--ink').trim(),ok:cs.getPropertyValue('--ok').trim(),line:cs.getPropertyValue('--muted').trim()};
+    var upd=function(e){var bb=cv.getBoundingClientRect();r.ptr={x:e.clientX-bb.left,y:e.clientY-bb.top}};
+    cv.addEventListener('pointermove',upd); cv.addEventListener('pointerdown',upd);
+    cv.addEventListener('pointerleave',function(){r.ptr=null});
+  }
+  r.t0=performance.now(); r.raf=requestAnimationFrame(loop1);
+}
+
+function lightPos(r,ms){
+  var s=ms/1000;
+  return {x:r.W/2+(r.W/2-44)*(0.78*Math.sin(0.55*s)+0.22*Math.sin(1.6*s+1)),
+          y:r.H/2+(r.H/2-40)*(0.8*Math.sin(0.83*s+0.7)+0.2*Math.sin(1.9*s))};
+}
+function loop1(ts){
+  var r=s1.run; if(!r||r.phase!=='run')return;
+  var c=r.cond, el=Math.max(0,ts-r.t0);
+  if(r.last==null)r.last=ts;
+  var dt=Math.min(100,Math.max(0,ts-r.last)); r.last=ts;
+  if(c.t){
+    var p=lightPos(r,el), hit=!!(r.ptr&&Math.hypot(r.ptr.x-p.x,r.ptr.y-p.y)<=HIT);
+    r.total+=dt; if(hit)r.on+=dt;
+    var x=r.ctx; x.clearRect(0,0,r.W,r.H);
+    x.lineWidth=2; x.strokeStyle=hit?r.col.ok:r.col.line; x.setLineDash(hit?[]:[5,5]);
+    x.beginPath(); x.arc(p.x,p.y,HIT,0,Math.PI*2); x.stroke(); x.setLineDash([]);
+    var g=x.createRadialGradient(p.x,p.y,2,p.x,p.y,16); g.addColorStop(0,'#fff6c4'); g.addColorStop(1,'#f5b83d');
+    x.fillStyle=g; x.beginPath(); x.arc(p.x,p.y,15,0,Math.PI*2); x.fill();
+    x.strokeStyle=r.col.ink; x.lineWidth=2; x.stroke();
+    if(r.ptr){x.beginPath();x.arc(r.ptr.x,r.ptr.y,6,0,Math.PI*2);x.lineWidth=2;x.strokeStyle=r.col.ink;x.stroke()}
+  }
+  var ck=$('#s1-clock');
+  if(ck)ck.textContent=c.f?(fmt(el/1000)+' s'):(Math.max(0,Math.ceil((TRACK_MS-el)/1000))+' s left');
+  if(!c.f&&el>=TRACK_MS){finish1();return}
+  r.raf=requestAnimationFrame(loop1);
+}
+
+function answer1(yes){
+  var r=s1.run; if(!r||r.phase!=='run'||!r.cond.f)return;
+  var corner=((r.k+r.dir*r.idx)%10+10)%10;
+  if(FANS[corner]===yes)r.correct++;
+  r.idx++;
+  if(r.idx>=10){finish1();return}
+  $('#s1-cn').textContent=r.idx+1;
+  $$('#s1-pips i').forEach(function(p,i){p.classList.toggle('on',i<r.idx)});
+}
+
+function finish1(){
+  var r=s1.run; if(!r)return;
+  cancelAnimationFrame(r.raf); r.phase='done';
+  var c=r.cond, now=performance.now();
+  var out={correct:c.f?r.correct:null,time:c.f?(now-r.t0)/1000:null,track:c.t?(r.total>0?r.on/r.total*100:0):null};
+  s1.res[c.id]=out; s1.run=null;
+  renderConds1(); renderResults1();
+  var nxt=CONDS1.filter(function(x){return !s1.res[x.id]})[0];
+  var sum=[c.f?(out.correct+'/10 correct in '+fmt(out.time)+' s'):'',c.t?('pointer on the light '+Math.round(out.track)+'% of the time'):''].filter(Boolean).join(', ');
+  $('#s1-stage').innerHTML='<div class="done"><p class="big">Condition '+c.n+' complete</p><p>'+esc(sum)+'.</p>'+
+    (nxt?'<button class="btn primary" data-start="'+nxt.id+'">Start condition '+nxt.n+'</button>':'<button class="btn primary" id="s1-see">See your results</button>')+'</div>';
+}
+
+function renderResults1(){
+  var rows=CONDS1.map(function(c){
+    var r=s1.res[c.id];
+    if(!r)return '<tr><td>'+c.n+'. '+esc(c.name)+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+    var maxT=Math.max(10,Math.max.apply(null,CONDS1.map(function(x){var q=s1.res[x.id];return q&&q.time?q.time:0})));
+    return '<tr><td>'+c.n+'. '+esc(c.name)+'</td>'+
+      '<td class="num">'+(c.f?r.correct+' / 10':'—')+'</td>'+
+      '<td class="num">'+(c.f?fmt(r.time)+' s<span class="bar"><i style="width:'+Math.min(100,r.time/maxT*100)+'%"></i></span>':'20 s fixed')+'</td>'+
+      '<td class="num">'+(c.t?Math.round(r.track)+'%<span class="bar"><i style="width:'+r.track+'%"></i></span>':'—')+'</td></tr>';
+  }).join('');
+  $('#s1-table').innerHTML='<thead><tr><th>Condition</th><th>F corners correct</th><th>Time for the F task</th><th>Pointer on the light</th></tr></thead><tbody>'+rows+'</tbody>';
+
+  var R=s1.res, all=R.F&&R.FV&&R.FT&&R.T, box=$('#s1-compare');
+  if(!all){box.innerHTML='<p class="lock">Finish all four conditions to unlock the comparison with the original study.</p>';return}
+  var cost=function(x,withTrack){
+    var v=Math.max(0,x.time/R.F.time-1)+Math.max(0,(R.F.correct-x.correct)/10);
+    if(withTrack)v+=Math.max(0,(R.T.track-x.track)/100);
+    return v;
+  };
+  var cV=cost(R.FV,false), cT=cost(R.FT,true);
+  var verdict=cT>cV+0.1
+    ?'Your results fit the original study: the two visual/spatial tasks together hurt your performance more than the visual task paired with a verbal task.'
+    :'Your results do not show that pattern clearly. One person and only 10 corners is a very small sample, so practice and luck can hide it. Try again, or compare with the class.';
+  var share='Study 1 | Trace F: '+R.F.correct+'/10, '+fmt(R.F.time)+'s | F + say yes: '+R.FV.correct+'/10, '+fmt(R.FV.time)+'s | F + track light: '+R.FT.correct+'/10, '+fmt(R.FT.time)+'s, on target '+Math.round(R.FT.track)+'% | Track alone: on target '+Math.round(R.T.track)+'%';
+  box.innerHTML='<div class="compare">'+
+    '<div class="mine"><h3>What happened to you</h3><ul>'+
+      '<li>Tracing and saying “yes”: '+R.FV.correct+'/10 correct in '+fmt(R.FV.time)+' s. Tracing alone: '+R.F.correct+'/10 in '+fmt(R.F.time)+' s.</li>'+
+      '<li>Tracing and tracking: '+R.FT.correct+'/10 correct in '+fmt(R.FT.time)+' s. You kept the pointer on the light '+Math.round(R.FT.track)+'% of the time, compared with '+Math.round(R.T.track)+'% when tracking alone.</li>'+
+      (s1.pred?'<li>You predicted: '+esc(s1.pred)+'.</li>':'')+
+      '</ul><p class="verdict">'+verdict+'</p></div>'+
+    '<div class="orig"><h3>What Baddeley and Hitch found</h3><ul>'+
+      '<li><b>Results:</b> when doing two visual/spatial tasks together (tracing the F and tracking the light) performance dropped. When doing one visual and one verbal task, performance was not affected. They could do both tasks at the same time.</li>'+
+      '<li><b>Conclusion:</b> visual and spatial tasks compete for the same limited system, the visuo-spatial sketchpad. But visual and verbal tasks use separate systems, supporting the idea of multiple components in working memory.</li></ul></div>'+
+    '<div class="remember"><h3>Remember it</h3><p>Same component = performance drops. Different components = performance holds up.</p></div>'+
+    shareBlock('s1-share',share)+'</div>';
+}
+
+$('#s1-predict').addEventListener('change',function(e){if(e.target.name==='p1'){s1.pred=e.target.value;renderResults1()}});
+$('#panel-s1').addEventListener('click',function(e){
+  var st=e.target.closest('[data-start]'); if(st){startCond1(st.dataset.start);return}
+  if(e.target.closest('#s1-go')){beginRun1();return}
+  var a=e.target.closest('[data-a]'); if(a){answer1(a.dataset.a==='1');return}
+  if(e.target.closest('#s1-see')){$('#s1-results-step').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'})}
+});
+
+/* =====================================================
+   STUDY 2
+   ===================================================== */
+var LOADS=[0,1,3,6], ITEMS=6;
+var s2={pred:null,res:{},run:null};
+
+function genDigits(n){
+  var d=[]; while(d.length<n){var x=Math.floor(Math.random()*10); if(d.length&&d[d.length-1]===x)continue; d.push(x)} return d;
+}
+function genItem(){
+  var X=Math.random()<.5?'A':'B', Y=X==='A'?'B':'A';
+  var verb=Math.random()<.5?'follows':'precedes', pair=Math.random()<.5?'AB':'BA';
+  var truth=verb==='follows'?(pair===Y+X):(pair===X+Y);
+  return {X:X,Y:Y,verb:verb,pair:pair,truth:truth};
+}
+function loadName(n){return n===0?'No digits':(n===1?'1 digit':n+' digits')}
+
+function renderRounds2(){
+  $('#s2-conds').innerHTML=LOADS.map(function(n,i){
+    var r=s2.res[n], sum='Not done yet';
+    if(r)sum=r.correct+'/'+ITEMS+' correct, '+fmt(r.avg)+' s each'+(n?(', '+r.pos+'/'+n+' digits'):'');
+    return '<article class="cond'+(r?' done':'')+'"><div class="cond-n">'+(i+1)+'</div><div class="cond-body"><h3>Round '+(i+1)+': '+loadName(n)+'</h3>'+
+      '<span class="tag ver">'+(n?'Reasoning + digit span':'Baseline')+'</span><p class="sum">'+esc(sum)+'</p></div>'+
+      '<button class="btn ghost" data-round="'+n+'">'+(r?'Redo':'Start')+'</button></article>';
+  }).join('');
+}
+function stageIdle2(){
+  $('#s2-stage').innerHTML='<div class="item"><h3>How the reasoning task works</h3>'+
+    '<p>You read a statement about the letters A and B, then decide if the pair shown matches it.</p>'+
+    '<p class="statement">B follows A</p><p class="pair">AB?</p>'+
+    '<p class="rule" style="align-self:flex-start">B follows A means B comes after A. AB has B after A, so this one is true.</p>'+
+    '<p class="note">Choose a round above to begin.</p></div>';
+}
+function abort2(){
+  var r=s2.run; if(!r)return;
+  clearTimeout(r.timer); s2.run=null;
+  if($('#s2-stage'))stageIdle2();
+}
+function startRound2(n){
+  abort2();
+  s2.run={n:n,digits:genDigits(n),phase:'brief',i:0,correct:0,times:[],item:null,tItem:0,timer:0};
+  var r=s2.run;
+  $('#s2-stage').innerHTML='<div class="brief"><span class="chip ver">Round '+(LOADS.indexOf(n)+1)+' of 4: '+loadName(n)+'</span>'+
+    (n?'<p>You will see <b>'+n+'</b> digit'+(n>1?'s':'')+'. Remember '+(n>1?'them':'it')+', then answer '+ITEMS+' reasoning questions while you keep repeating '+(n>1?'them':'it')+'.</p>':
+       '<p>No digits this round. Just answer '+ITEMS+' reasoning questions as quickly and accurately as you can.</p>')+
+    '<button class="btn primary" id="s2-go">'+(n?'Show the digits':'Start')+'</button></div>';
+  $('#s2-stage').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'nearest'});
+}
+function showDigits2(){
+  var r=s2.run; if(!r)return;
+  if(!r.n){nextItem2();return}
+  r.phase='digits';
+  $('#s2-stage').innerHTML='<div class="item"><p class="note">Remember these. Say them over and over.</p><p class="digits" aria-label="Digits to remember">'+r.digits.join(' ')+'</p>'+
+    '<button class="btn primary" id="s2-hide">I have them, start the questions</button></div>';
+  r.timer=setTimeout(nextItem2,1500+800*r.n);
+}
+function nextItem2(){
+  var r=s2.run; if(!r)return;
+  clearTimeout(r.timer);
+  r.phase='reason'; r.item=genItem();
+  $('#s2-stage').innerHTML='<div class="item"><div class="run-head"><span class="chip ver">Question '+(r.i+1)+' of '+ITEMS+'</span>'+
+    (r.n?'<span class="say" style="padding:2px 10px">Keep repeating the '+(r.n>1?r.n+' digits':'digit')+'</span>':'')+'</div>'+
+    '<p class="statement">'+r.item.X+' '+r.item.verb+' '+r.item.Y+'</p><p class="pair">'+r.item.pair+'?</p>'+
+    '<div class="answers"><button class="btn" data-t="1">True <kbd>T</kbd></button><button class="btn" data-t="0">False <kbd>F</kbd></button></div></div>';
+  r.tItem=performance.now();
+}
+function answer2(val){
+  var r=s2.run; if(!r||r.phase!=='reason')return;
+  r.times.push((performance.now()-r.tItem)/1000);
+  if(val===r.item.truth)r.correct++;
+  r.i++;
+  if(r.i>=ITEMS){ if(r.n)recall2();else finish2(0) } else nextItem2();
+}
+function recall2(){
+  var r=s2.run; r.phase='recall';
+  $('#s2-stage').innerHTML='<div class="item"><h3>Now type the '+(r.n>1?r.n+' digits':'digit')+' in the order you saw '+(r.n>1?'them':'it')+'</h3>'+
+    '<div class="recall-row"><input id="s2-recall" type="text" inputmode="numeric" autocomplete="off" maxlength="'+r.n+'" aria-label="Digits you remember"><button class="btn primary" id="s2-submit">Check</button></div></div>';
+  var inp=$('#s2-recall'); inp.focus();
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();submitRecall2()}});
+}
+function submitRecall2(){
+  var r=s2.run; if(!r||r.phase!=='recall')return;
+  var v=($('#s2-recall').value||'').replace(/\D/g,''), pos=0;
+  for(var i=0;i<r.n;i++)if(v[i]===String(r.digits[i]))pos++;
+  finish2(pos);
+}
+function finish2(pos){
+  var r=s2.run; if(!r)return; r.phase='done';
+  var avg=r.times.reduce(function(a,b){return a+b},0)/r.times.length;
+  s2.res[r.n]={correct:r.correct,avg:avg,pos:pos};
+  var n=r.n, digitsLine=n?(' You recalled '+pos+' of '+n+' digit'+(n>1?'s':'')+' in the right place ('+r.digits.join(' ')+').'):'';
+  s2.run=null; renderRounds2(); renderResults2();
+  var nxt=LOADS.filter(function(x){return !s2.res[x]})[0];
+  $('#s2-stage').innerHTML='<div class="done"><p class="big">Round '+(LOADS.indexOf(n)+1)+' complete</p><p>'+r.correct+' of '+ITEMS+' reasoning questions correct, '+fmt(avg)+' s each on average.'+esc(digitsLine)+'</p>'+
+    (nxt!==undefined?'<button class="btn primary" data-round="'+nxt+'">Start round '+(LOADS.indexOf(nxt)+1)+'</button>':'<button class="btn primary" id="s2-see">See your results</button>')+'</div>';
+}
+
+function renderResults2(){
+  var maxT=Math.max(3,Math.max.apply(null,LOADS.map(function(n){return s2.res[n]?s2.res[n].avg:0})));
+  var rows=LOADS.map(function(n,i){
+    var r=s2.res[n];
+    if(!r)return '<tr><td>'+(i+1)+'. '+loadName(n)+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+    return '<tr><td>'+(i+1)+'. '+loadName(n)+'</td><td class="num">'+r.correct+' / '+ITEMS+'</td>'+
+      '<td class="num">'+fmt(r.avg)+' s<span class="bar"><i style="width:'+Math.min(100,r.avg/maxT*100)+'%"></i></span></td>'+
+      '<td class="num">'+(n?r.pos+' / '+n:'—')+'</td></tr>';
+  }).join('');
+  $('#s2-table').innerHTML='<thead><tr><th>Digits to remember</th><th>Reasoning correct</th><th>Average time per question</th><th>Digits recalled</th></tr></thead><tbody>'+rows+'</tbody>';
+  var R=s2.res, box=$('#s2-compare');
+  if(!(R[0]&&R[1]&&R[3]&&R[6])){box.innerHTML='<p class="lock">Finish all four rounds to unlock the comparison with the original study.</p>';return}
+  var dT=R[6].avg-R[0].avg, high=R[6].correct>=ITEMS-1;
+  var verdict=high
+    ?(dT>0.15?'Your results fit the original study: your accuracy stayed high and you were a little slower with more digits to hold.':'Your accuracy stayed high, like the original study. Your speed barely changed, so the extra digits did not slow you much.')
+    :'Your accuracy dropped more than in the original study. With one person and only '+ITEMS+' questions per round, one slip changes a lot. Try again and compare with the class.';
+  var share='Study 2 | Reasoning correct/'+ITEMS+' and avg secs by digits: 0 digits '+R[0].correct+', '+fmt(R[0].avg)+'s | 1 digit '+R[1].correct+', '+fmt(R[1].avg)+'s | 3 digits '+R[3].correct+', '+fmt(R[3].avg)+'s | 6 digits '+R[6].correct+', '+fmt(R[6].avg)+'s | digits recalled at 6: '+R[6].pos+'/6';
+  box.innerHTML='<div class="compare">'+
+    '<div class="mine"><h3>What happened to you</h3><ul>'+
+      '<li>Reasoning accuracy: '+R[0].correct+'/'+ITEMS+' with no digits, '+R[6].correct+'/'+ITEMS+' with six digits.</li>'+
+      '<li>Average time per question: '+fmt(R[0].avg)+' s with no digits, '+fmt(R[6].avg)+' s with six digits ('+(dT>=0?'+':'')+fmt(dT)+' s).</li>'+
+      '<li>With six digits you recalled '+R[6].pos+' of 6 in the right place.</li>'+
+      (s2.pred?'<li>You predicted: '+esc(s2.pred)+'.</li>':'')+
+      '</ul><p class="verdict">'+verdict+'</p></div>'+
+    '<div class="orig"><h3>What Baddeley and Hitch found</h3><ul>'+
+      '<li><b>Results:</b> reasoning remained highly accurate, even with 6 digits to remember. There was a slight increase in time taken as digit load increased, but no major performance drop. Participants could do both tasks successfully.</li>'+
+      '<li><b>Conclusion:</b> working memory can handle two tasks if they use different systems.</li></ul></div>'+
+    '<div class="remember"><h3>Remember it</h3><p>If both tasks needed the same limited store, adding digits would wreck the reasoning. It did not, so the tasks must use different systems.</p></div>'+
+    shareBlock('s2-share',share)+'</div>';
+}
+
+$('#s2-predict').addEventListener('change',function(e){if(e.target.name==='p2'){s2.pred=e.target.value;renderResults2()}});
+$('#panel-s2').addEventListener('click',function(e){
+  var rd=e.target.closest('[data-round]'); if(rd){startRound2(parseInt(rd.dataset.round,10));return}
+  if(e.target.closest('#s2-go')){showDigits2();return}
+  if(e.target.closest('#s2-hide')){nextItem2();return}
+  var t=e.target.closest('[data-t]'); if(t){answer2(t.dataset.t==='1');return}
+  if(e.target.closest('#s2-submit')){submitRecall2();return}
+  if(e.target.closest('#s2-see')){$('#s2-table').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'})}
+});
+
+/* keyboard answers */
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  var tag=(e.target.tagName||'').toLowerCase(); if(tag==='input'||tag==='textarea')return;
+  var k=e.key.toLowerCase();
+  if(s1.run&&s1.run.phase==='run'&&s1.run.cond.f){
+    if(k==='y'){answer1(true);e.preventDefault()}else if(k==='n'){answer1(false);e.preventDefault()}
+  }
+  if(s2.run&&s2.run.phase==='reason'){
+    if(k==='t'){answer2(true);e.preventDefault()}else if(k==='f'){answer2(false);e.preventDefault()}
+  }
+});
+
+/* =====================================================
+   CHECK YOURSELF
+   ===================================================== */
+var QS=[
+  {q:'In Study 1, which combination of tasks made performance drop?',
+   o:['Tracing the F and tracking a moving light','Tracing the F and saying “yes” out loud','Tracking the light and saying “yes” out loud'],a:0,
+   e:'Both tasks are visual/spatial, so they compete for the same limited system, the visuo-spatial sketchpad.'},
+  {q:'Why was performance not affected when people traced the F and said “yes” out loud?',
+   o:['People had practised both tasks before','The verbal task was too easy to matter','The two tasks use different systems in working memory'],a:2,
+   e:'One task was visual and one was verbal, so they did not compete for the same component.'},
+  {q:'Which part of working memory does Study 1 investigate?',
+   o:['The phonological loop','The visuo-spatial sketchpad','Procedural memory'],a:1,
+   e:'The aim was to see whether visual and spatial tasks use the visuo-spatial sketchpad.'},
+  {q:'What were the two tasks in Study 2?',
+   o:['A reasoning task and a digit span task','Tracing a letter and tracking a light','Reading aloud and writing a story'],a:0,
+   e:'Participants did a reasoning task (for example “B follows A – AB?”) while remembering 1 to 6 digits.'},
+  {q:'What happened to reasoning accuracy in Study 2 when people held 6 digits?',
+   o:['It fell sharply','It improved a lot','It stayed highly accurate'],a:2,
+   e:'Reasoning remained highly accurate, even with 6 digits to remember.'},
+  {q:'What happened to the time taken as the number of digits increased?',
+   o:['It rose slightly','It rose a lot','It fell'],a:0,
+   e:'There was a slight increase in time taken, but no major performance drop.'},
+  {q:'What did Study 2 conclude?',
+   o:['Working memory has just one store','Digits are held in long-term memory','Working memory can handle two tasks if they use different systems'],a:2,
+   e:'Because performance held up, the two tasks must use different systems within working memory.'}
+];
+var qState;
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function renderQ(){
+  qState={done:{},score:0};
+  $('#q-list').innerHTML=QS.map(function(q,qi){
+    var opts=shuffle(q.o.map(function(t,i){return {t:t,right:i===q.a}}));
+    return '<div class="qcard" data-q="'+qi+'"><h3>'+(qi+1)+'. '+esc(q.q)+'</h3><div class="opts">'+
+      opts.map(function(o){return '<button class="opt" data-right="'+(o.right?1:0)+'">'+esc(o.t)+'</button>'}).join('')+
+      '</div><p class="why" hidden></p></div>';
+  }).join('');
+  $('#q-score').textContent='0 / '+QS.length;
+}
+$('#q-list').addEventListener('click',function(e){
+  var b=e.target.closest('.opt'); if(!b||b.disabled)return;
+  var card=b.closest('.qcard'), qi=+card.dataset.q;
+  $$('.opt',card).forEach(function(o){o.disabled=true; if(o.dataset.right==='1')o.classList.add('right')});
+  var ok=b.dataset.right==='1'; if(!ok)b.classList.add('wrong'); else qState.score++;
+  var why=$('.why',card); why.hidden=false; why.textContent=(ok?'Correct. ':'Not quite. ')+QS[qi].e;
+  $('#q-score').textContent=qState.score+' / '+QS.length;
+});
+$('#q-reset').addEventListener('click',renderQ);
+
+/* init */
+renderConds1(); renderResults1(); stageIdle1();
+renderRounds2(); renderResults2(); stageIdle2();
+renderQ();
+})();
+</script>
+
+</body></html>
